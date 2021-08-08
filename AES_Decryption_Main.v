@@ -646,6 +646,50 @@ module AES_Decrypter(CipherText, key, PlainText);
             end
         end
     endfunction
+    
+    // Key Expansion
+    function [1279:0] key_expansion(input [127:0] key);
+        reg [127 : 0] sub_key;
+        reg [127 : 0] prev_key;
+        reg [31:0] temp [0:3];
+        reg [7:0] j[1:10];
+        reg [1279:0] final_key;
+        integer i;
+        
+        begin
+            j[1]=8'h01;
+            j[2]=8'h02;
+            j[3]=8'h04;
+            j[4]=8'h08;
+            j[5]=8'h10;
+            j[6]=8'h20;
+            j[7]=8'h40;
+            j[8]=8'h80;
+            j[9]=8'h1b;
+            j[10]=8'h36;
+            prev_key = key;
+            
+            for(i=1;i<=10;i=i+1)
+            begin
+                sub_key = SubBytes(prev_key);
+                temp[0] = prev_key[127:96]^ Shift_Column(sub_key[31:0]) ^ {j[i],24'h0};
+                temp[1] = prev_key[95:64] ^ temp[0];
+                temp[2] = prev_key[63:32] ^ temp[1];
+                temp[3] = prev_key[31:0] ^ temp[2];
+                prev_key = {temp[0], temp[1], temp[2], temp[3]};
+                final_key[1279-(i-1)*128-:128] = prev_key;
+            end
+            
+            key_expansion = final_key;
+        end
+    endfunction 
+        
+    function [31:0] Shift_Column(input [31:0] column);
+        begin
+            Shift_Column = {column[23:16],column[15:8],column[7:0],column[31:24]};
+        end
+    endfunction
+
 
     
     
