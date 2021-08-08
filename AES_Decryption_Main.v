@@ -690,6 +690,25 @@ module AES_Decrypter(CipherText, key, PlainText);
         end
     endfunction
 
-
-    
-    
+    // AES Decryption Rounds
+    integer a;
+    always @*
+        begin : implement
+            reg [127 : 0] temp;
+            reg [1279 : 0] full_key_expansion; 
+            full_key_expansion = key_expansion(key);
+            temp = Add_Round_key(CipherText, full_key_expansion[127:0]);
+            temp = Inv_ShiftRow(temp);
+            temp = InvSubBytes(temp);
+        
+            for(a=9;a>0;a=a-1)
+            begin
+                temp = Add_Round_key(temp, full_key_expansion[1279-(a-1)*128-:128]);
+                temp = inv_mixcolumns(temp);
+                temp = Inv_ShiftRow(temp);
+                temp = InvSubBytes(temp);
+            end
+            
+            PlainText = Add_Round_key(temp,key);                      
+        end 
+endmodule
